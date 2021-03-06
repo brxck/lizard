@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Load newer acorn to allow ES2016+ with paperjs -->
+    <script
+      type="text/javascript"
+      src="node_modules/acorn/dist/acorn.js"
+    ></script>
+    <!-- Load the Paper.js library -->
+    <script
+      type="text/javascript"
+      src="node_modules/paper/dist/paper-full.js"
+    ></script>
+    <!-- Define inlined PaperScript associate it with myCanvas -->
+    <script type="text/x-paperscript" src="index.js" canvas="myCanvas"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="myCanvas" data-paper-resize="true"></canvas>
+    <style>
+      html,
+      body {
+        height: 100%;
+      }
+      canvas[data-paper-resize="true"] {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </body>
+</html>
