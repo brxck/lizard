@@ -57,6 +57,7 @@ function spawnLizard({
       from: foot.data.base.point,
       to: foot.center,
     });
+    // leg.length *= 2;
     leg.firstCurve.divideAt(0.5);
     legs.addChild(leg);
   });
@@ -71,20 +72,21 @@ const lizards = [
       strokeWidth: 20,
       strokeCap: "round",
     },
-    legStyle: { strokeColor: "#14993c" },
-    footStyle: { strokeColor: "#11ab3f" },
+    legStyle: { strokeColor: "#14993c", strokeWidth: 12 },
+    footStyle: { strokeColor: "#11ab3f", strokeWidth: 14 },
     feetPairs: 2,
   },
 ].map((props) => spawnLizard(props));
 
 function onFrame(event) {
-  // console.clear();
+  console.clear();
   lizards.forEach((lizard) => {
     const { spine, feet, legs } = lizard.children;
     moveSpine(lizard);
     moveFeet(feet);
     moveLegs(legs, feet);
     spine.smooth({ type: "continuous" });
+    legs.children.forEach((leg) => leg.smooth({ type: "continuous" }));
   });
 }
 
@@ -104,16 +106,14 @@ function moveSpine(lizard) {
     vector.length = SPACING;
     nextSegment.point = segment.point - vector;
 
-    // Don't allow sharp bends; side-effect of length x2
+    // Straighten out sharp bends; side-effect of length x2
     if (lastVector) {
       const adjustedVector = segment.point - nextSegment.point;
       const angle = adjustedVector.getDirectedAngle(lastVector);
       if (angle > 20) {
         adjustedVector.angle = lastVector.angle;
-        adjustedVector.rotate(20);
       } else if (angle < -20) {
         adjustedVector.angle = lastVector.angle;
-        adjustedVector.rotate(20);
       }
       nextSegment.point = nextSegment.point - adjustedVector;
     }
@@ -122,9 +122,9 @@ function moveSpine(lizard) {
 }
 
 function getStep(base, side) {
-  const stepAngleDelta = side === "left" ? -35 : 35;
+  const stepAngleDelta = side === "left" ? -45 : 45;
   const angle = (base.point - base.next.point).angle + stepAngleDelta;
-  return base.point + new Point({ length: 50, angle });
+  return base.point + new Point({ length: 30, angle });
 }
 
 function moveFeet(feet) {
@@ -132,7 +132,7 @@ function moveFeet(feet) {
     const { base, side, opposite } = foot.data;
     const step = getStep(base, side);
     const stepVector = step - foot.position;
-    if (stepVector.length > 100 && !opposite.data.stepping) {
+    if (stepVector.length > 85 && !opposite.data.stepping) {
       foot.data.stepping = true;
     }
     if (foot.data.stepping) {
@@ -144,10 +144,26 @@ function moveFeet(feet) {
 }
 
 function moveLegs(legs, feet) {
-  zip(legs.children, feet.children).forEach(([leg, foot]) => {
-    leg.segments[0].point = foot.data.base.point;
-    leg.segments[1].point = (foot.data.base.point + foot.position) / 2;
-    leg.segments[2].point = foot.position;
+  zip(legs.children, feet.children).forEach(([leg, foot], i) => {
+    const [hip, knee, ankle] = leg.segments;
+    const { base } = foot.data;
+    hip.point = base.point;
+    ankle.point = foot.position;
+    knee.point = (ankle.point + hip.point) / 2;
+
+    // Genuinely no idea what I'm doing here, began as an attempt at inverse kinematics...
+    // Winged it at the end. Basically, angle the knees.
+    const toDeg = 180 / Math.PI;
+    const segmentLength = 100;
+    const distance = hip.point.getDistance(foot.position);
+    const cosAngle =
+      (segmentLength * segmentLength +
+        segmentLength * segmentLength -
+        distance * distance) /
+      (2 * segmentLength * segmentLength);
+    const acosAngle = Math.acos(cosAngle) * toDeg;
+    const angle = (base.point - base.next.point).angle - (180 - acosAngle);
+    knee.point += new Point({ length: 15, angle });
   });
 }
 
