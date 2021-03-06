@@ -24,6 +24,7 @@ function spawnLizard({
     spine.add(start + new Point(i * SPACING, 0));
   }
   const feet = new Group({ name: "feet" });
+  const legs = new Group({ name: "legs" });
   const legSpacing = (length - headSize - tailSize) / feetPairs;
   for (let i = 0; i < feetPairs; i++) {
     const baseIndex = Math.round(headSize + legSpacing * i);
@@ -37,7 +38,15 @@ function spawnLizard({
     foot.data.side = "right";
     feet.addChild(foot);
   }
-  const lizard = new Group([spine, feet]);
+  feet.children.forEach((foot) => {
+    const leg = new Path.Line({
+      ...style,
+      from: foot.data.base.point,
+      to: foot.center,
+    });
+    legs.addChild(leg);
+  });
+  const lizard = new Group([spine, feet, legs]);
   return lizard;
 }
 
@@ -49,11 +58,12 @@ const lizards = [
 ].map((props) => spawnLizard(props));
 
 function onFrame(event) {
-  // console.clear();
+  console.clear();
   lizards.forEach((lizard) => {
-    const { spine, feet: footGroup } = lizard.children;
+    const { spine, feet, legs } = lizard.children;
     moveSpine(lizard);
-    moveFeet(footGroup.children);
+    moveFeet(feet);
+    moveLegs(legs, feet);
     spine.smooth({ type: "continuous" });
   });
 }
@@ -92,7 +102,7 @@ function moveSpine(lizard) {
 }
 
 function moveFeet(feet) {
-  feet.forEach((foot) => {
+  feet.children.forEach((foot) => {
     const { base, side } = foot.data;
     const stepAngleDelta = side === "left" ? -35 : 35;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
@@ -102,4 +112,15 @@ function moveFeet(feet) {
       foot.position = step;
     }
   });
+}
+
+function moveLegs(legs, feet) {
+  zip(legs.children, feet.children).forEach(([leg, foot]) => {
+    leg.segments[0].point = foot.data.base.point;
+    leg.segments[1].point = foot.position;
+  });
+}
+
+function zip(a, b) {
+  return a.map((k, i) => [k, b[i]]);
 }
