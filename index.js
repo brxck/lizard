@@ -110,7 +110,7 @@ function moveFeet(feet) {
     const { base, side, opposite } = foot.data;
     const stepAngleDelta = side === "left" ? -35 : 35;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
-    const step = base.point + new Point({ length: 75, angle });
+    const step = base.point + new Point({ length: 50, angle });
     const stepVector = step - foot.position;
     if (stepVector.length > 100 && !opposite.data.stepping) {
       foot.data.stepping = true;
@@ -132,4 +132,12 @@ function moveLegs(legs, feet) {
 
 function zip(a, b) {
   return a.map((k, i) => [k, b[i]]);
+}
+
+function onMouseDown() {
+  lizards[0].fullySelected = true;
+}
+
+function onMouseUp() {
+  lizards[0].fullySelected = false;
 }
