@@ -9,12 +9,13 @@ function onMouseMove(event) {
 }
 
 function spawnLizard({
-  length = 15,
   style,
   feetPairs = 4,
-  headSize = 2,
+  headSize = 5,
   tailSize = 3,
+  midSize = 10,
 }) {
+  const length = headSize + tailSize + midSize;
   const spine = new Path({
     ...style,
     name: "spine",
@@ -25,14 +26,14 @@ function spawnLizard({
   }
   const feet = new Group({ name: "feet" });
   const legs = new Group({ name: "legs" });
-  const legSpacing = (length - headSize - tailSize) / feetPairs;
+  const legSpacing = midSize / feetPairs;
   for (let i = 0; i < feetPairs; i++) {
     const baseIndex = Math.round(headSize + legSpacing * i);
     const base = spine.segments[baseIndex];
     const foot = new Path.Circle({
       ...style,
       radius: 5,
-      data: { base, side: "left" },
+      data: { base, side: "left", stepping: true },
     });
     feet.addChild(foot.clone());
     foot.data.side = "right";
@@ -107,9 +108,12 @@ function moveFeet(feet) {
     const stepAngleDelta = side === "left" ? -35 : 35;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
     const step = base.point + new Point({ length: 75, angle });
-    const stepDelta = step.getDistance(foot.position);
-    if (stepDelta > 100) {
-      foot.position = step;
+    const stepVector = step - foot.position;
+    if (stepVector.length > 100) foot.data.stepping = true;
+    if (foot.data.stepping) {
+      stepVector.length = Math.min(30, stepVector.length);
+      foot.position += stepVector;
+      foot.data.stepping = (step - foot.position).length != 0;
     }
   });
 }
