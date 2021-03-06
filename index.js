@@ -9,7 +9,10 @@ function onMouseMove(event) {
 }
 
 function spawnLizard({
-  style,
+  defaultStyle,
+  legStyle = {},
+  footStyle = {},
+  spineStyle = {},
   feetPairs = 4,
   headSize = 5,
   tailSize = 3,
@@ -17,7 +20,8 @@ function spawnLizard({
 }) {
   const length = headSize + tailSize + midSize;
   const spine = new Path({
-    ...style,
+    ...defaultStyle,
+    ...spineStyle,
     name: "spine",
   });
   const start = view.center / [10, 1];
@@ -31,7 +35,9 @@ function spawnLizard({
     const baseIndex = Math.round(headSize + legSpacing * i);
     const base = spine.segments[baseIndex];
     const rightFoot = new Path.Circle({
-      ...style,
+      ...defaultStyle,
+      ...footStyle,
+
       radius: 5,
       data: { base, side: "right", stepping: true },
     });
@@ -39,24 +45,31 @@ function spawnLizard({
     leftFoot.data.side = "left";
     leftFoot.data.opposite = rightFoot;
     rightFoot.data.opposite = leftFoot;
-    feet.addChild(leftFoot);
-    feet.addChild(rightFoot);
+    feet.addChildren([leftFoot, rightFoot]);
   }
   feet.children.forEach((foot) => {
     const leg = new Path.Line({
-      ...style,
+      ...defaultStyle,
+      ...legStyle,
+
       from: foot.data.base.point,
       to: foot.center,
     });
     legs.addChild(leg);
   });
-  const lizard = new Group([spine, feet, legs]);
+  const lizard = new Group([feet, legs, spine]);
   return lizard;
 }
 
 const lizards = [
   {
-    style: { strokeColor: "green", strokeWidth: 20, strokeCap: "round" },
+    defaultStyle: {
+      strokeColor: "#18ba49",
+      strokeWidth: 20,
+      strokeCap: "round",
+    },
+    legStyle: { strokeColor: "#14993c" },
+    footStyle: { strokeColor: "#11ab3f" },
     feetPairs: 2,
   },
 ].map((props) => spawnLizard(props));
