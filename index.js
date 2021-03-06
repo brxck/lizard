@@ -28,6 +28,7 @@ function spawnLizard({
   for (let i = 0; i < length; i++) {
     spine.add(start + new Point(i * SPACING, 0));
   }
+
   const feet = new Group({ name: "feet" });
   const legs = new Group({ name: "legs" });
   const legSpacing = midSize / feetPairs;
@@ -37,24 +38,26 @@ function spawnLizard({
     const rightFoot = new Path.Circle({
       ...defaultStyle,
       ...footStyle,
-
       radius: 5,
       data: { base, side: "right", stepping: true },
+      center: getStep(base, "right"),
     });
     leftFoot = rightFoot.clone();
+    leftFoot.center = getStep(base, "left");
     leftFoot.data.side = "left";
     leftFoot.data.opposite = rightFoot;
     rightFoot.data.opposite = leftFoot;
     feet.addChildren([leftFoot, rightFoot]);
   }
+
   feet.children.forEach((foot) => {
     const leg = new Path.Line({
       ...defaultStyle,
       ...legStyle,
-
       from: foot.data.base.point,
       to: foot.center,
     });
+    leg.firstCurve.divideAt(0.5);
     legs.addChild(leg);
   });
   const lizard = new Group([feet, legs, spine]);
@@ -75,7 +78,7 @@ const lizards = [
 ].map((props) => spawnLizard(props));
 
 function onFrame(event) {
-  console.clear();
+  // console.clear();
   lizards.forEach((lizard) => {
     const { spine, feet, legs } = lizard.children;
     moveSpine(lizard);
@@ -118,12 +121,16 @@ function moveSpine(lizard) {
   });
 }
 
+function getStep(base, side) {
+  const stepAngleDelta = side === "left" ? -35 : 35;
+  const angle = (base.point - base.next.point).angle + stepAngleDelta;
+  return base.point + new Point({ length: 50, angle });
+}
+
 function moveFeet(feet) {
   feet.children.forEach((foot) => {
     const { base, side, opposite } = foot.data;
-    const stepAngleDelta = side === "left" ? -35 : 35;
-    const angle = (base.point - base.next.point).angle + stepAngleDelta;
-    const step = base.point + new Point({ length: 50, angle });
+    const step = getStep(base, side);
     const stepVector = step - foot.position;
     if (stepVector.length > 100 && !opposite.data.stepping) {
       foot.data.stepping = true;
@@ -139,7 +146,8 @@ function moveFeet(feet) {
 function moveLegs(legs, feet) {
   zip(legs.children, feet.children).forEach(([leg, foot]) => {
     leg.segments[0].point = foot.data.base.point;
-    leg.segments[1].point = foot.position;
+    leg.segments[1].point = (foot.data.base.point + foot.position) / 2;
+    leg.segments[2].point = foot.position;
   });
 }
 
