@@ -30,14 +30,17 @@ function spawnLizard({
   for (let i = 0; i < feetPairs; i++) {
     const baseIndex = Math.round(headSize + legSpacing * i);
     const base = spine.segments[baseIndex];
-    const foot = new Path.Circle({
+    const rightFoot = new Path.Circle({
       ...style,
       radius: 5,
-      data: { base, side: "left", stepping: true },
+      data: { base, side: "right", stepping: true },
     });
-    feet.addChild(foot.clone());
-    foot.data.side = "right";
-    feet.addChild(foot);
+    leftFoot = rightFoot.clone();
+    leftFoot.data.side = "left";
+    leftFoot.data.opposite = rightFoot;
+    rightFoot.data.opposite = leftFoot;
+    feet.addChild(leftFoot);
+    feet.addChild(rightFoot);
   }
   feet.children.forEach((foot) => {
     const leg = new Path.Line({
@@ -104,12 +107,14 @@ function moveSpine(lizard) {
 
 function moveFeet(feet) {
   feet.children.forEach((foot) => {
-    const { base, side } = foot.data;
+    const { base, side, opposite } = foot.data;
     const stepAngleDelta = side === "left" ? -35 : 35;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
     const step = base.point + new Point({ length: 75, angle });
     const stepVector = step - foot.position;
-    if (stepVector.length > 100) foot.data.stepping = true;
+    if (stepVector.length > 100 && !opposite.data.stepping) {
+      foot.data.stepping = true;
+    }
     if (foot.data.stepping) {
       stepVector.length = Math.min(30, stepVector.length);
       foot.position += stepVector;
