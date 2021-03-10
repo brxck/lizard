@@ -8,6 +8,13 @@ function onMouseMove(event) {
   mouse = event.point;
 }
 
+const bodyMap = {
+  0.2: "50",
+  0.3: "25",
+  0.4: "50",
+  1: "10",
+};
+
 class Lizard {
   constructor({
     defaultStyle,
@@ -25,10 +32,18 @@ class Lizard {
       ...spineStyle,
       name: "spine",
     });
-    const start = view.center / [10, 1];
+    const body = new Path({
+      fillColor: "green",
+      name: "body",
+    });
+    const start = view.center;
     for (let i = 0; i < length; i++) {
-      spine.add(start + new Point(i * SPACING, 0));
+      const center = start + new Point(i * SPACING * 2, 0);
+      spine.add(center);
+      body.add(center + new Point({ angle: 90, length: 10 }));
+      body.insert(0, center + new Point({ angle: -90, length: 10 }));
     }
+    body.closed = true;
 
     const feet = new Group({ name: "feet" });
     const legs = new Group({ name: "legs" });
@@ -58,23 +73,25 @@ class Lizard {
         from: foot.data.base.point,
         to: foot.center,
       });
+      leg.data.side = foot.data.side;
       leg.firstCurve.divideAt(0.5);
       legs.addChild(leg);
     });
 
+    this.body = body;
     this.spine = spine;
     this.legs = legs;
     this.feet = feet;
-    this.group = new Group([feet, legs, spine]);
+    this.group = new Group([feet, legs, spine, body]);
   }
 
   update() {
-    this.moveSpine();
+    this.moveBody();
     this.moveFeet();
     this.moveLegs();
   }
 
-  moveSpine() {
+  moveBody() {
     // Move head toward toward mouse
     const firstVector = mouse - this.spine.firstSegment.point;
     if (firstVector.length > 45) {
@@ -104,7 +121,16 @@ class Lizard {
       }
       lastVector = vector;
     });
+    this.spine.segments.forEach((segment, i) => {
+      const nextSegment = segment.next || segment.clone();
+      const vector = segment.point - nextSegment.point;
+      vector.angle += 90;
+      const j = this.body.segments.length - 1 - i;
+      this.body.segments[i].point = segment.point - vector;
+      this.body.segments[j].point = segment.point + vector;
+    });
     this.spine.smooth({ type: "continuous" });
+    this.body.smooth({ type: "continuous" });
   }
 
   getStep(base, side) {
@@ -178,9 +204,9 @@ function zip(a, b) {
 }
 
 function onMouseDown() {
-  lizards[0].fullySelected = true;
+  lizards[0].group.fullySelected = true;
 }
 
 function onMouseUp() {
-  lizards[0].fullySelected = false;
+  lizards[0].group.fullySelected = false;
 }
