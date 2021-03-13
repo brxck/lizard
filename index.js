@@ -8,16 +8,17 @@ function onMouseMove(event) {
 
 class Lizard {
   constructor({
+    scale = 1,
     primaryColor,
     secondaryColor,
     feetPairs = 2,
-    lengths = {
-      head: 6,
-      tail: 8,
-      body: 10,
-    },
+    lengths = [4, 8, 10],
+    chonk = 1,
   }) {
-    this.length = lengths.head + lengths.tail + lengths.body;
+    this.scale = scale;
+    this.chonk = chonk;
+    this.lengths = lengths.map((x) => x * scale);
+    this.length = this.lengths.reduce((a, b) => a + b, 0);
 
     // Create spine
     const spine = new Path();
@@ -47,13 +48,13 @@ class Lizard {
 
     // Create feet
     const feet = new Group();
-    const legSpacing = (lengths.body / feetPairs) * 0.8;
+    const legSpacing = (lengths[1] / feetPairs) * 0.8;
     for (let i = 0; i < feetPairs; i++) {
-      const baseIndex = Math.round(lengths.head + legSpacing * i);
+      const baseIndex = Math.round(lengths[0] + legSpacing * i);
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
         fillColor: brightness(primaryColor, -10),
-        radius: 12,
+        radius: 12 * this.scale * this.chonk,
         data: { base, side: "right", stepping: true },
         center: this.getNextStep(base, "right"),
       });
@@ -71,7 +72,7 @@ class Lizard {
       const leg = new Path.Line({
         style: {
           strokeColor: brightness(primaryColor, -20),
-          strokeWidth: 12,
+          strokeWidth: 12 * this.scale * this.chonk,
           strokeCap: "round",
         },
         from: foot.data.base.point,
@@ -132,18 +133,35 @@ class Lizard {
   }
 
   /** Returns the length from spine to body edge of a given point */
-  getBodyDepth(index) {
-    if (index === 0) return 5; // nose
-    if (index === this.length - 2) return 1.5; // tail-tip
-    if (index > 0 && index < 4) return 30 * Math.sin(index / 4) + 5; // head
-    if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4); // body
-    if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2; //tail
-    return 15 * Math.cos(index / this.length); // neck
+  getBodyDepth(i) {
+    let n;
+    const [head, body, tail] = this.lengths;
+    const neck = this.lengths[0];
+    const waist = neck + body;
+    if (i === 0) {
+      n = 5; // nose
+    } else if (i === this.length - 2) {
+      n = 1.5; // tail-tip
+    } else if (i > 0 && i < neck) {
+      n = 20 * Math.sin(i / 3.14) + 5; // neck
+    } else if (i > neck && i < waist) {
+      n = 25 * Math.cos((i - body) / (body / 3.14)); // body
+    } else if (i >= waist) {
+      n = 13 * Math.sin((i - tail) / (tail / 3.14)); //tail
+    } else {
+      n = 20; // neck/waist
+    }
+    return n * this.scale * this.chonk;
   }
 
   /** Returns the length from spine to body edge of a given point */
   getMarkingDepth(index) {
-    return 10 * Math.sin(index - 4 / 6) * Math.sin((index / this.length) * 3.5);
+    return (
+      this.scale *
+      10 *
+      Math.sin(index - 4 / 6) *
+      Math.sin((index / this.length) * 3.5)
+    );
   }
 
   /** Draw body along the spine path */
@@ -194,7 +212,7 @@ class Lizard {
   getNextStep(base, side) {
     const stepAngleDelta = side === "left" ? -55 : 55;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
-    return base.point + new Point({ length: 40, angle });
+    return base.point + new Point({ length: this.scale * 40, angle });
   }
 
   /** Check each foot's distance from the next footstep and move if above threshhold */
