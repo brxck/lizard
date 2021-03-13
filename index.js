@@ -1,21 +1,9 @@
-"use strict";
-
 const SPACING = 10; // 1/2 the distance between the points
 
 /** Global point storing mouse location */
 let mouse = new Point(view.center);
 function onMouseMove(event) {
   mouse = event.point;
-}
-
-function spineToBody(index, length) {
-  if (index === 0) return 5;
-  if (index > 0 && index < 4) return 25 * Math.sin(index / 4) + 5;
-  if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4);
-  if (index === length - 1) return 1;
-  if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2;
-  // if (index >= 5 && index < 12) return 25 * Math.sin(index - 4 / 6);
-  return 15 * Math.cos(index / length);
 }
 
 class Lizard {
@@ -31,28 +19,22 @@ class Lizard {
     const length = headSize + tailSize + midSize;
 
     // Create spine
-    const spine = new Path({
-      name: "spine",
-    });
+    const spine = new Path();
     const start = view.center;
     for (let i = 0; i < length; i++) {
       spine.add(start + new Point(i * SPACING * 2, 0));
     }
 
     // Create body
-    const body = new Path({
-      fillColor: "#18ba49",
-      name: "body",
-      closed: true,
-    });
+    const body = new Path({ fillColor: "#18ba49", closed: true });
     for (let i = 0; i < spine.curves.length; i++) {
       const center = spine.curves[i].getPointAt(0.5);
       body.insert(0, center + new Point({ angle: -90, length: 10 }));
       body.add(center + new Point({ angle: 90, length: 10 }));
     }
 
-    const feet = new Group({ name: "feet" });
-    const legs = new Group({ name: "legs" });
+    // Create feet
+    const feet = new Group();
     const legSpacing = midSize / feetPairs;
     for (let i = 0; i < feetPairs; i++) {
       const baseIndex = Math.round(headSize + legSpacing * i);
@@ -62,16 +44,18 @@ class Lizard {
         ...footStyle,
         radius: 5,
         data: { base, side: "right", stepping: true },
-        center: this.getStep(base, "right"),
+        center: this.getNextStep(base, "right"),
       });
       const leftFoot = rightFoot.clone();
-      leftFoot.center = this.getStep(base, "left");
+      leftFoot.center = this.getNextStep(base, "left");
       leftFoot.data.side = "left";
       leftFoot.data.opposite = rightFoot;
       rightFoot.data.opposite = leftFoot;
       feet.addChildren([leftFoot, rightFoot]);
     }
 
+    //Create legs
+    const legs = new Group();
     feet.children.forEach((foot) => {
       const leg = new Path.Line({
         ...defaultStyle,
@@ -84,6 +68,7 @@ class Lizard {
       legs.addChild(leg);
     });
 
+    this.length = length;
     this.body = body;
     this.spine = spine;
     this.legs = legs;
@@ -91,13 +76,16 @@ class Lizard {
     this.group = new Group([feet, legs, spine, body]);
   }
 
+  /** Move lizard toward mouse by updating each group */
   update() {
-    this.moveBody();
-    this.moveFeet();
-    this.moveLegs();
+    this.updateSpine();
+    this.updateBody();
+    this.updateFeet();
+    this.updateLegs();
   }
 
-  moveBody() {
+  /** Move spine toward mouse, progressively straightening sharp angles */
+  updateSpine() {
     // Move head toward toward mouse
     const firstVector = mouse - this.spine.firstSegment.point;
     if (firstVector.length > 45) {
@@ -107,9 +95,9 @@ class Lizard {
 
     // Move each segment to be a set distance behind the previous
     let lastVector = null;
-    this.spine.segments.forEach((segment, i) => {
+    for (let i = 0; i < this.spine.segments.length - 1; i++) {
+      const segment = this.spine.segments[i];
       const nextSegment = segment.next;
-      if (!nextSegment) return;
       const vector = segment.point - nextSegment.point;
       vector.length = SPACING;
       nextSegment.point = segment.point - vector;
@@ -118,16 +106,29 @@ class Lizard {
       if (lastVector) {
         const adjustedVector = segment.point - nextSegment.point;
         const angle = adjustedVector.getDirectedAngle(lastVector);
-        if (angle > 20) {
-          adjustedVector.angle = lastVector.angle;
-        } else if (angle < -20) {
+        if (angle > 20 || angle < -20) {
           adjustedVector.angle = lastVector.angle;
         }
         nextSegment.point = nextSegment.point - adjustedVector;
       }
       lastVector = vector;
-    });
+    }
+    this.spine.smooth({ type: "continuous" });
+  }
 
+  /** Returns the length from spine to body edge of a given point */
+  getBodyDepth(index) {
+    if (index === 0) return 5;
+    if (index > 0 && index < 4) return 25 * Math.sin(index / 4) + 5;
+    if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4);
+    if (index === this.length - 1) return 1;
+    if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2;
+    // if (index >= 5 && index < 12) return 25 * Math.sin(index - 4 / 6);
+    return 15 * Math.cos(index / this.length);
+  }
+
+  /** Draw body along the spine path */
+  updateBody() {
     for (let i = 0; i < this.spine.curves.length; i++) {
       const j = this.body.segments.length - 1 - i;
       const center = this.spine.curves[i].getPointAt(0.5);
@@ -136,30 +137,30 @@ class Lizard {
         center +
         new Point({
           angle: angle + 90,
-          length: spineToBody(i, this.spine.curves.length),
+          length: this.getBodyDepth(i, this.spine.curves.length),
         });
       this.body.segments[j].point =
         center +
         new Point({
           angle: angle - 90,
-          length: spineToBody(i, this.spine.curves.length),
+          length: this.getBodyDepth(i, this.spine.curves.length),
         });
     }
-
-    this.spine.smooth({ type: "continuous" });
     this.body.smooth({ type: "continuous" });
   }
 
-  getStep(base, side) {
+  /** Returns location of the next footstep */
+  getNextStep(base, side) {
     const stepAngleDelta = side === "left" ? -45 : 45;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
     return base.point + new Point({ length: 40, angle });
   }
 
-  moveFeet() {
+  /** Check each foot's distance from the next footstep and move if above threshhold */
+  updateFeet() {
     this.feet.children.forEach((foot) => {
       const { base, side, opposite } = foot.data;
-      const step = this.getStep(base, side);
+      const step = this.getNextStep(base, side);
       const stepVector = step - foot.position;
       if (stepVector.length > 85 && !opposite.data.stepping) {
         foot.data.stepping = true;
@@ -172,7 +173,8 @@ class Lizard {
     });
   }
 
-  moveLegs() {
+  /** Reposition each leg betwwen its base and foot */
+  updateLegs() {
     zip(this.legs.children, this.feet.children).forEach(([leg, foot], i) => {
       const [hip, knee, ankle] = leg.segments;
       const { base } = foot.data;
@@ -205,8 +207,8 @@ const lizards = [
       strokeWidth: 20,
       strokeCap: "round",
     },
-    legStyle: { strokeColor: "#14993c", strokeWidth: 12 },
-    footStyle: { strokeColor: "#11ab3f", strokeWidth: 14 },
+    legStyle: { strokeColor: "#139139", strokeWidth: 12 },
+    footStyle: { strokeColor: "#22a148", strokeWidth: 14 },
     feetPairs: 2,
   },
 ].map((props) => new Lizard(props));
