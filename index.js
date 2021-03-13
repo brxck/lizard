@@ -8,15 +8,16 @@ function onMouseMove(event) {
 
 class Lizard {
   constructor({
-    defaultStyle,
-    legStyle = {},
-    footStyle = {},
-    feetPairs = 4,
-    headSize = 6,
-    tailSize = 8,
-    midSize = 10,
+    primaryColor,
+    secondaryColor,
+    feetPairs = 2,
+    lengths = {
+      head: 6,
+      tail: 8,
+      body: 10,
+    },
   }) {
-    this.length = headSize + tailSize + midSize;
+    this.length = lengths.head + lengths.tail + lengths.body;
 
     // Create spine
     const spine = new Path();
@@ -33,7 +34,10 @@ class Lizard {
       body.insert(0, center + new Point({ angle: -90, length: depth }));
       body.add(center + new Point({ angle: 90, length: depth }));
     }
-    const markings = new Path({ fillColor: "#b83a2e", closed: true });
+    const markings = new Path({
+      fillColor: secondaryColor,
+      closed: true,
+    });
     for (let i = 0; i < spine.curves.length; i++) {
       const center = spine.curves[i].getPointAt(0.5);
       const depth = this.getBodyDepth(i);
@@ -43,14 +47,13 @@ class Lizard {
 
     // Create feet
     const feet = new Group();
-    const legSpacing = (midSize / feetPairs) * 0.8;
+    const legSpacing = (lengths.body / feetPairs) * 0.8;
     for (let i = 0; i < feetPairs; i++) {
-      const baseIndex = Math.round(headSize + legSpacing * i);
+      const baseIndex = Math.round(lengths.head + legSpacing * i);
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
-        ...defaultStyle,
-        ...footStyle,
-        radius: 5,
+        fillColor: brightness(primaryColor, -10),
+        radius: 12,
         data: { base, side: "right", stepping: true },
         center: this.getNextStep(base, "right"),
       });
@@ -66,8 +69,11 @@ class Lizard {
     const legs = new Group();
     feet.children.forEach((foot) => {
       const leg = new Path.Line({
-        ...defaultStyle,
-        ...legStyle,
+        style: {
+          strokeColor: brightness(primaryColor, -20),
+          strokeWidth: 12,
+          strokeCap: "round",
+        },
         from: foot.data.base.point,
         to: foot.center,
       });
@@ -127,13 +133,12 @@ class Lizard {
 
   /** Returns the length from spine to body edge of a given point */
   getBodyDepth(index) {
-    if (index === 0) return 5;
-    if (index > 0 && index < 4) return 25 * Math.sin(index / 4) + 5;
-    if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4);
-    if (index === this.length - 1) return 1;
-    if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2;
-    // if (index >= 5 && index < 12) return 25 * Math.sin(index - 4 / 6);
-    return 15 * Math.cos(index / this.length);
+    if (index === 0) return 5; // nose
+    if (index === this.length - 2) return 1.5; // tail-tip
+    if (index > 0 && index < 4) return 30 * Math.sin(index / 4) + 5; // head
+    if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4); // body
+    if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2; //tail
+    return 15 * Math.cos(index / this.length); // neck
   }
 
   /** Returns the length from spine to body edge of a given point */
@@ -211,7 +216,9 @@ class Lizard {
 
   /** Reposition each leg betwwen its base and foot */
   updateLegs() {
-    zip(this.legs.children, this.feet.children).forEach(([leg, foot], i) => {
+    for (let i = 0; i < this.legs.children.length; i++) {
+      const leg = this.legs.children[i];
+      const foot = this.feet.children[i];
       const [hip, knee, ankle] = leg.segments;
       const { base } = foot.data;
       hip.point = base.point;
@@ -220,19 +227,14 @@ class Lizard {
       let angle = leg.data.base.curve.getTangentAt(0.5).angle;
       knee.point += new Point({ length: 20, angle });
       leg.smooth({ type: "continuous" });
-    });
+    }
   }
 }
 
 const lizards = [
   {
-    defaultStyle: {
-      strokeColor: "#18ba49",
-      strokeWidth: 20,
-      strokeCap: "round",
-    },
-    legStyle: { strokeColor: "#139139", strokeWidth: 12 },
-    footStyle: { strokeColor: "#22a148", strokeWidth: 14 },
+    primaryColor: "#18ba49",
+    secondaryColor: "#b83a2e",
     feetPairs: 2,
   },
 ].map((props) => new Lizard(props));
@@ -242,14 +244,29 @@ function onFrame(event) {
   lizards.forEach((lizard) => lizard.update());
 }
 
-function zip(a, b) {
-  return a.map((k, i) => [k, b[i]]);
-}
-
 function onMouseDown() {
   lizards[0].group.fullySelected = true;
 }
 
 function onMouseUp() {
   lizards[0].group.fullySelected = false;
+}
+
+function brightness(color, percent) {
+  const num = parseInt(color.replace("#", ""), 16),
+    amt = Math.round(2.55 * percent),
+    R = (num >> 16) + amt,
+    B = ((num >> 8) & 0x00ff) + amt,
+    G = (num & 0x0000ff) + amt;
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255) * 0x100 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  );
 }

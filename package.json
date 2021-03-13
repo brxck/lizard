@@ -9,10 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "acorn": "^8.0.5",
-    "paper": "^0.12.8"
-  },
+  "dependencies": {},
   "devDependencies": {
     "eslint": "^7.22.0"
   }

@@ -5,15 +5,17 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Load newer acorn to allow ES2016+ with paperjs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.0.5/acorn.min.js"></script>
+    <script
+      src="https://unpkg.com/acorn@8.1.0/dist/acorn.js"
+      type="text/javascript"
+    ></script>
     <!-- Load the Paper.js library -->
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.11/paper-full.min.js"
-      integrity="sha512-ehNJ9gpOQJn8EYlA3P1zUtfrh97G/6WNsjfPfpnMxbo6PX6UXHRj8Ny5MCd36w2eTPlvOSVuXLZmY+/VLVhI4A=="
-      crossorigin="anonymous"
+      src="https://unpkg.com/paper@0.12.11/dist/paper-full.min.js"
+      type="text/javascript"
     ></script>
     <!-- Define inlined PaperScript associate it with myCanvas -->
-    <script type="text/x-paperscript" src="index.js" canvas="myCanvas"></script>
+    <script type="text/paperscript" src="index.js" canvas="myCanvas"></script>
     <title>Document</title>
   </head>
   <body>
