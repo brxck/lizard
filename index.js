@@ -35,7 +35,7 @@ class Lizard {
 
     // Create feet
     const feet = new Group();
-    const legSpacing = midSize / feetPairs;
+    const legSpacing = (midSize / feetPairs) * 0.8;
     for (let i = 0; i < feetPairs; i++) {
       const baseIndex = Math.round(headSize + legSpacing * i);
       const base = spine.segments[baseIndex];
@@ -54,7 +54,7 @@ class Lizard {
       feet.addChildren([leftFoot, rightFoot]);
     }
 
-    //Create legs
+    // Create legs
     const legs = new Group();
     feet.children.forEach((foot) => {
       const leg = new Path.Line({
@@ -63,7 +63,7 @@ class Lizard {
         from: foot.data.base.point,
         to: foot.center,
       });
-      leg.data.side = foot.data.side;
+      leg.data = { ...foot.data };
       leg.firstCurve.divideAt(0.5);
       legs.addChild(leg);
     });
@@ -151,7 +151,7 @@ class Lizard {
 
   /** Returns location of the next footstep */
   getNextStep(base, side) {
-    const stepAngleDelta = side === "left" ? -45 : 45;
+    const stepAngleDelta = side === "left" ? -55 : 55;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
     return base.point + new Point({ length: 40, angle });
   }
@@ -181,20 +181,8 @@ class Lizard {
       hip.point = base.point;
       ankle.point = foot.position;
       knee.point = (ankle.point + hip.point) / 2;
-
-      // Genuinely no idea what I'm doing here, began as an attempt at inverse kinematics...
-      // Winged it at the end. Basically, angle the knees.
-      const toDeg = 180 / Math.PI;
-      const segmentLength = 100;
-      const distance = hip.point.getDistance(foot.position);
-      const cosAngle =
-        (segmentLength * segmentLength +
-          segmentLength * segmentLength -
-          distance * distance) /
-        (2 * segmentLength * segmentLength);
-      const acosAngle = Math.acos(cosAngle) * toDeg;
-      const angle = (base.point - base.next.point).angle - (180 - acosAngle);
-      knee.point += new Point({ length: 15, angle });
+      let angle = leg.data.base.curve.getTangentAt(0.5).angle;
+      knee.point += new Point({ length: 20, angle });
       leg.smooth({ type: "continuous" });
     });
   }
