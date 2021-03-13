@@ -16,12 +16,12 @@ class Lizard {
     tailSize = 8,
     midSize = 10,
   }) {
-    const length = headSize + tailSize + midSize;
+    this.length = headSize + tailSize + midSize;
 
     // Create spine
     const spine = new Path();
     const start = view.center;
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < this.length; i++) {
       spine.add(start + new Point(i * SPACING * 2, 0));
     }
 
@@ -29,8 +29,16 @@ class Lizard {
     const body = new Path({ fillColor: "#18ba49", closed: true });
     for (let i = 0; i < spine.curves.length; i++) {
       const center = spine.curves[i].getPointAt(0.5);
-      body.insert(0, center + new Point({ angle: -90, length: 10 }));
-      body.add(center + new Point({ angle: 90, length: 10 }));
+      const depth = this.getBodyDepth(i);
+      body.insert(0, center + new Point({ angle: -90, length: depth }));
+      body.add(center + new Point({ angle: 90, length: depth }));
+    }
+    const markings = new Path({ fillColor: "#b83a2e", closed: true });
+    for (let i = 0; i < spine.curves.length; i++) {
+      const center = spine.curves[i].getPointAt(0.5);
+      const depth = this.getBodyDepth(i);
+      markings.insert(0, center + new Point({ angle: -90, length: depth }));
+      markings.add(center + new Point({ angle: 90, length: depth }));
     }
 
     // Create feet
@@ -68,18 +76,19 @@ class Lizard {
       legs.addChild(leg);
     });
 
-    this.length = length;
     this.body = body;
+    this.markings = markings;
     this.spine = spine;
     this.legs = legs;
     this.feet = feet;
-    this.group = new Group([feet, legs, spine, body]);
+    this.group = new Group([feet, legs, spine, body, markings]);
   }
 
   /** Move lizard toward mouse by updating each group */
   update() {
     this.updateSpine();
     this.updateBody();
+    this.updateMarkings();
     this.updateFeet();
     this.updateLegs();
   }
@@ -127,6 +136,11 @@ class Lizard {
     return 15 * Math.cos(index / this.length);
   }
 
+  /** Returns the length from spine to body edge of a given point */
+  getMarkingDepth(index) {
+    return 10 * Math.sin(index - 4 / 6) * Math.sin((index / this.length) * 3.5);
+  }
+
   /** Draw body along the spine path */
   updateBody() {
     for (let i = 0; i < this.spine.curves.length; i++) {
@@ -147,6 +161,28 @@ class Lizard {
         });
     }
     this.body.smooth({ type: "continuous" });
+  }
+
+  /** Draw body along the spine path */
+  updateMarkings() {
+    for (let i = 0; i < this.spine.curves.length; i++) {
+      const j = this.markings.segments.length - 1 - i;
+      const center = this.spine.curves[i].getPointAt(0.5);
+      const angle = this.spine.curves[i].getTangentAt(0.5).angle;
+      this.markings.segments[i].point =
+        center +
+        new Point({
+          angle: angle + 90,
+          length: this.getMarkingDepth(i, this.spine.curves.length),
+        });
+      this.markings.segments[j].point =
+        center +
+        new Point({
+          angle: angle - 90,
+          length: this.getMarkingDepth(i, this.spine.curves.length),
+        });
+    }
+    this.markings.smooth({ type: "continuous" });
   }
 
   /** Returns location of the next footstep */
