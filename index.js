@@ -8,42 +8,48 @@ function onMouseMove(event) {
   mouse = event.point;
 }
 
-const bodyMap = {
-  0.2: "50",
-  0.3: "25",
-  0.4: "50",
-  1: "10",
-};
+function spineToBody(index, length) {
+  if (index === 0) return 5;
+  if (index > 0 && index < 4) return 25 * Math.sin(index / 4) + 5;
+  if (index >= 5 && index < 12) return 25 * Math.sin((index - 3) / 4);
+  if (index === length - 1) return 1;
+  if (index >= 12) return 13 * Math.cos((index - 12) / 6) + 2;
+  // if (index >= 5 && index < 12) return 25 * Math.sin(index - 4 / 6);
+  return 15 * Math.cos(index / length);
+}
 
 class Lizard {
   constructor({
     defaultStyle,
     legStyle = {},
     footStyle = {},
-    spineStyle = {},
     feetPairs = 4,
-    headSize = 3,
-    tailSize = 4,
+    headSize = 6,
+    tailSize = 8,
     midSize = 10,
   }) {
     const length = headSize + tailSize + midSize;
+
+    // Create spine
     const spine = new Path({
-      ...defaultStyle,
-      ...spineStyle,
       name: "spine",
-    });
-    const body = new Path({
-      fillColor: "green",
-      name: "body",
     });
     const start = view.center;
     for (let i = 0; i < length; i++) {
-      const center = start + new Point(i * SPACING * 2, 0);
-      spine.add(center);
-      body.add(center + new Point({ angle: 90, length: 10 }));
-      body.insert(0, center + new Point({ angle: -90, length: 10 }));
+      spine.add(start + new Point(i * SPACING * 2, 0));
     }
-    body.closed = true;
+
+    // Create body
+    const body = new Path({
+      fillColor: "#18ba49",
+      name: "body",
+      closed: true,
+    });
+    for (let i = 0; i < spine.curves.length; i++) {
+      const center = spine.curves[i].getPointAt(0.5);
+      body.insert(0, center + new Point({ angle: -90, length: 10 }));
+      body.add(center + new Point({ angle: 90, length: 10 }));
+    }
 
     const feet = new Group({ name: "feet" });
     const legs = new Group({ name: "legs" });
@@ -121,14 +127,25 @@ class Lizard {
       }
       lastVector = vector;
     });
-    this.spine.segments.forEach((segment, i) => {
-      const nextSegment = segment.next || segment.clone();
-      const vector = segment.point - nextSegment.point;
-      vector.angle += 90;
+
+    for (let i = 0; i < this.spine.curves.length; i++) {
       const j = this.body.segments.length - 1 - i;
-      this.body.segments[i].point = segment.point - vector;
-      this.body.segments[j].point = segment.point + vector;
-    });
+      const center = this.spine.curves[i].getPointAt(0.5);
+      const angle = this.spine.curves[i].getTangentAt(0.5).angle;
+      this.body.segments[i].point =
+        center +
+        new Point({
+          angle: angle + 90,
+          length: spineToBody(i, this.spine.curves.length),
+        });
+      this.body.segments[j].point =
+        center +
+        new Point({
+          angle: angle - 90,
+          length: spineToBody(i, this.spine.curves.length),
+        });
+    }
+
     this.spine.smooth({ type: "continuous" });
     this.body.smooth({ type: "continuous" });
   }
@@ -136,7 +153,7 @@ class Lizard {
   getStep(base, side) {
     const stepAngleDelta = side === "left" ? -45 : 45;
     const angle = (base.point - base.next.point).angle + stepAngleDelta;
-    return base.point + new Point({ length: 30, angle });
+    return base.point + new Point({ length: 40, angle });
   }
 
   moveFeet() {
