@@ -48,9 +48,9 @@ class Lizard {
 
     // Create feet
     const feet = new Group();
-    const legSpacing = (lengths[1] / feetPairs) * 0.8;
+    const legSpacing = lengths[1] / feetPairs;
     for (let i = 0; i < feetPairs; i++) {
-      const baseIndex = Math.round(lengths[0] + legSpacing * i);
+      const baseIndex = Math.round(lengths[0] * 1.25 + legSpacing * i);
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
         fillColor: brightness(primaryColor, -10),
@@ -132,7 +132,10 @@ class Lizard {
     this.spine.smooth({ type: "continuous" });
   }
 
-  /** Returns the length from spine to body edge of a given point */
+  /**
+   * Returns the length from spine to body edge of a given point
+   * Each section gets its own trigonometric function.
+   */
   getBodyDepth(i) {
     let n;
     const [head, body, tail] = this.lengths;
@@ -141,26 +144,28 @@ class Lizard {
     if (i === 0) {
       n = 5; // nose
     } else if (i === this.length - 2) {
-      n = 1.5; // tail-tip
+      n = 2; // tail-tip
     } else if (i > 0 && i < neck) {
-      n = 20 * Math.sin(i / 3.14) + 5; // neck
+      n = 20 * Math.sin(i / 3.14) + 5; // head
+    } else if (i === neck) {
+      n = 15 * Math.sin(i / 3.14) + 5; // neck
     } else if (i > neck && i < waist) {
-      n = 25 * Math.cos((i - body) / (body / 3.14)); // body
+      n = 25 * Math.sin((i - neck) / (body / 3.14)); // body
     } else if (i >= waist) {
-      n = 13 * Math.sin((i - tail) / (tail / 3.14)); //tail
-    } else {
-      n = 20; // neck/waist
+      n = 10 * Math.cos((i - waist) / (tail / 1.57)); //tail
     }
     return n * this.scale * this.chonk;
   }
 
   /** Returns the length from spine to body edge of a given point */
   getMarkingDepth(index) {
-    return (
+    return Math.min(
+      this.getBodyDepth(index),
       this.scale *
-      10 *
-      Math.sin(index - 4 / 6) *
-      Math.sin((index / this.length) * 3.5)
+        this.chonk *
+        8 *
+        Math.sin(index - 4 / 6) *
+        Math.sin((index / this.length) * 3.5)
     );
   }
 
