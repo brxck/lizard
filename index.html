@@ -4,10 +4,6 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      src="https://unpkg.com/alpinejs@2.8.1/dist/alpine.js"
-      type="text/javascript"
-    ></script>
     <!-- Load newer acorn to allow ES2016+ with paperjs -->
     <script
       src="https://unpkg.com/acorn@8.1.0/dist/acorn.js"
@@ -24,98 +20,133 @@
       src="lizard.paper.js"
       canvas="myCanvas"
     ></script>
+    <script
+      src="https://unpkg.com/alpinejs@2.8.1/dist/alpine.js"
+      type="text/javascript"
+    ></script>
+    <script src="ui.js" type="text/javascript"></script>
     <title>lizard.js</title>
   </head>
   <body>
-    <aside
-      class="panel"
-      x-data="{ collapse: false, primaryColor: '#18ba49', secondaryColor:'#b83a2e', feetPairs: 2 }"
-    >
-      <div style="display: flex; justify-content: space-between">
-        <strong>lizard.js</strong>
-        <a
-          href="#"
-          @click.prevent="collapse = !collapse"
-          x-text="collapse ? 'Expand' : 'Collapse'"
-        ></a>
-      </div>
-
-      <div x-show="!collapse" style="padding-top: 1rem" class="controls">
-        <div>
-          <label for="primaryColor">primaryColor</label>
-          <input
-            type="color"
-            name="primaryColor"
-            id="primaryColor"
-            x-model="primaryColor"
-          />
+    <div class="container" @click="showPanel($event)" x-data="controlPanel()">
+      <aside
+        class="panel"
+        x-ref="panel"
+        x-show="show"
+        @click.away="show = false"
+        @click.stop=""
+      >
+        <div style="display: flex; justify-content: space-between">
+          <a
+            href="https://github.com/brxck/lizard.js"
+            target="_blank"
+            noopener
+            noreferrer
+            ><strong
+              style="font-size: large; font-family: var(--mono); color: #000"
+              >> lizard.js</strong
+            ></a
+          >
         </div>
-        <div>
-          <label for="secondaryColor">secondaryColor</label>
-          <input
-            type="color"
-            name="secondaryColor"
-            id="secondaryColor"
-            x-model="secondaryColor"
-          />
+        <div style="padding-top: 1rem" class="controls">
+          <div>
+            <label for="primaryColor">Primary Color</label>
+            <input
+              type="color"
+              name="primaryColor"
+              id="primaryColor"
+              x-model="options.primaryColor"
+            />
+          </div>
+          <div>
+            <label for="secondaryColor">Secondary Color</label>
+            <input
+              type="color"
+              name="secondaryColor"
+              id="secondaryColor"
+              x-model="options.secondaryColor"
+            />
+          </div>
+          <div>
+            <label for="scale">Scale</label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              name="scale"
+              id="scale"
+              x-model.number="options.scale"
+            />
+            <span x-text="options.scale * 100 + '%'"></span>
+          </div>
+          <div>
+            <label for="chonk">Chonk</label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              name="chonk"
+              id="chonk"
+              x-model.number="options.chonk"
+            />
+            <span x-text="options.chonk * 100 + '%'"></span>
+          </div>
+          <div>
+            <label for="feetPairs">Feet</label>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              name="feetPairs"
+              id="feetPairs"
+              x-model.number="options.feetPairs"
+            />
+            <span x-text="options.feetPairs * 2"></span>
+          </div>
+          <div>
+            <label for="head">Head</label>
+            <input
+              type="range"
+              name="head"
+              id="head"
+              min="2"
+              max="25"
+              x-model.number="options.headLength"
+            />
+            <span x-text="options.headLength"></span>
+          </div>
+          <div>
+            <label for="body">Body</label>
+            <input
+              type="range"
+              name="body"
+              id="body"
+              min="5"
+              max="25"
+              x-model.number="options.bodyLength"
+            />
+            <span x-text="options.bodyLength"></span>
+          </div>
+          <div>
+            <label for="tail">Tail</label>
+            <input
+              type="range"
+              name="tail"
+              id="tail"
+              min="2"
+              max="25"
+              x-model.number="options.tailLength"
+            />
+            <span x-text="options.tailLength"></span>
+          </div>
+          <button @click="spawn()">Spawn</button>
+          <button @click="options = { ...defaults }">Reset</button>
         </div>
-        <div>
-          <label for="feetPairs">feetPairs</label>
-          <input
-            type="range"
-            min="0"
-            max="5"
-            name="feet"
-            id="feetPairs"
-            x-model="feetPairs"
-          />
-          <span x-text="feetPairs * 2"></span>
-        </div>
-
-        <!-- <label for="tail">Tail Length</label>
-        <input
-          type="range"
-          name="tail"
-          id="tail"
-          @change="tail = $event.target.value"
-        /> -->
-        <button
-          @click="spawnLizard({ primaryColor, secondaryColor, feetPairs })"
-        >
-          Spawn
-        </button>
-      </div>
-    </aside>
-    <canvas id="myCanvas" data-paper-resize="true"></canvas>
-    <style>
-      html,
-      body {
-        height: 100%;
-      }
-
-      canvas[data-paper-resize="true"] {
-        width: 100%;
-        height: 100%;
-      }
-
-      .panel {
-        box-sizing: border-box;
-        border-radius: 0.5rem;
-        border: 1px solid lightgray;
-        margin: 1rem;
-        padding: 2rem;
-        position: fixed;
-        right: 0;
-        width: 300px;
-        background-color: whitesmoke;
-      }
-
-      .controls > div {
-        align-items: center;
-        justify-content: space-between;
-        display: flex;
-        padding-bottom: 1rem;
-      }
-    </style>
+      </aside>
+      <canvas id="myCanvas" data-paper-resize="true"></canvas>
+    </div>
+    <link rel="stylesheet" href="style.css" />
   </body>
 </html>

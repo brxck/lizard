@@ -7,18 +7,11 @@ function onMouseMove(event) {
 }
 
 class Lizard {
-  constructor({
-    scale = 1,
-    primaryColor,
-    secondaryColor,
-    feetPairs = 2,
-    lengths = [4, 8, 10],
-    chonk = 1,
-  }) {
-    this.scale = scale;
-    this.chonk = chonk;
-    this.lengths = lengths.map((x) => x * scale);
-    this.length = this.lengths.reduce((a, b) => a + b, 0);
+  constructor(options) {
+    Object.entries(options).forEach(([key, value]) => {
+      this[key] = value;
+    });
+    this.length = this.headLength + this.bodyLength + this.tailLength;
 
     // Create spine
     const spine = new Path();
@@ -28,7 +21,7 @@ class Lizard {
     }
 
     // Create body
-    const body = new Path({ fillColor: primaryColor, closed: true });
+    const body = new Path({ fillColor: this.primaryColor, closed: true });
     for (let i = 0; i < spine.curves.length; i++) {
       const center = spine.curves[i].getPointAt(0.5);
       const depth = this.getBodyDepth(i);
@@ -36,7 +29,7 @@ class Lizard {
       body.add(center + new Point({ angle: 90, length: depth }));
     }
     const markings = new Path({
-      fillColor: secondaryColor,
+      fillColor: this.secondaryColor,
       closed: true,
     });
     for (let i = 0; i < spine.curves.length; i++) {
@@ -48,12 +41,14 @@ class Lizard {
 
     // Create feet
     const feet = new Group();
-    const legSpacing = lengths[1] / feetPairs;
-    for (let i = 0; i < feetPairs; i++) {
-      const baseIndex = Math.round(lengths[0] * 1.25 + legSpacing * i);
+    const legSpacing = (this.headLength * 2) / this.feetPairs;
+    for (let i = 0; i < this.feetPairs; i++) {
+      const baseIndex = Math.round(
+        this.scale * this.headLength * 1.25 + legSpacing * i
+      );
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
-        fillColor: brightness(primaryColor, -10),
+        fillColor: brightness(this.primaryColor, -10),
         radius: 12 * this.scale * this.chonk,
         data: { base, side: "right", stepping: true },
         center: this.getNextStep(base, "right"),
@@ -71,7 +66,7 @@ class Lizard {
     feet.children.forEach((foot) => {
       const leg = new Path.Line({
         style: {
-          strokeColor: brightness(primaryColor, -20),
+          strokeColor: brightness(this.primaryColor, -20),
           strokeWidth: 12 * this.scale * this.chonk,
           strokeCap: "round",
         },
@@ -138,9 +133,8 @@ class Lizard {
    */
   getBodyDepth(i) {
     let n;
-    const [head, body, tail] = this.lengths;
-    const neck = this.lengths[0];
-    const waist = neck + body;
+    const neck = this.headLength;
+    const waist = neck + this.bodyLength;
     if (i === 0) {
       n = 5; // nose
     } else if (i === this.length - 2) {
@@ -150,9 +144,9 @@ class Lizard {
     } else if (i === neck) {
       n = 15 * Math.sin(i / 3.14) + 5; // neck
     } else if (i > neck && i < waist) {
-      n = 25 * Math.sin((i - neck) / (body / 3.14)); // body
+      n = 25 * Math.sin((i - neck) / (this.bodyLength / 3.14)); // body
     } else if (i >= waist) {
-      n = 10 * Math.cos((i - waist) / (tail / 1.57)); //tail
+      n = 10 * Math.cos((i - waist) / (this.tailLength / 1.57)); //tail
     }
     return n * this.scale * this.chonk;
   }
@@ -256,9 +250,14 @@ class Lizard {
 
 const lizards = [
   new Lizard({
+    chonk: 1,
+    scale: 1,
     primaryColor: "#18ba49",
     secondaryColor: "#b83a2e",
     feetPairs: 2,
+    headLength: 4,
+    bodyLength: 8,
+    tailLength: 10,
   }),
 ];
 
@@ -270,14 +269,6 @@ window.spawnLizard = function (props) {
 
 function onFrame(event) {
   lizards.forEach((lizard) => lizard.update());
-}
-
-function onMouseDown() {
-  lizards[0].group.fullySelected = true;
-}
-
-function onMouseUp() {
-  lizards[0].group.fullySelected = false;
 }
 
 function brightness(color, percent) {
