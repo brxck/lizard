@@ -28,7 +28,7 @@ class Lizard {
     }
 
     // Create body
-    const body = new Path({ fillColor: "#18ba49", closed: true });
+    const body = new Path({ fillColor: primaryColor, closed: true });
     for (let i = 0; i < spine.curves.length; i++) {
       const center = spine.curves[i].getPointAt(0.5);
       const depth = this.getBodyDepth(i);
@@ -255,15 +255,20 @@ class Lizard {
 }
 
 const lizards = [
-  {
+  new Lizard({
     primaryColor: "#18ba49",
     secondaryColor: "#b83a2e",
     feetPairs: 2,
-  },
-].map((props) => new Lizard(props));
+  }),
+];
+
+// Add functions to window so that they can be called externally
+window.spawnLizard = function (props) {
+  lizards[0].group.remove();
+  lizards[0] = new Lizard(props);
+};
 
 function onFrame(event) {
-  console.clear();
   lizards.forEach((lizard) => lizard.update());
 }
 
