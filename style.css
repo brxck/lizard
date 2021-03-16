@@ -10,7 +10,7 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir,
-    helvetica neue, helvetica, Ubuntu, roboto, noto, segoe ui, arial, sans-serif;
+    helvetica neue, helvetica, roboto, noto, segoe ui, arial, sans-serif;
   background-color: #cddcdc;
 }
 
@@ -20,19 +20,38 @@ body {
   }
 }
 
-canvas[data-paper-resize="true"] {
+#myCanvas {
   width: 100%;
   height: 100%;
+  z-index: 10;
+  position: relative;
 }
 
 .container {
+  position: relative;
   height: 100%;
   width: 100%;
+}
+
+.instructions {
+  color: rgba(255, 255, 255, 0.1);
+  list-style: none;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 6rem;
+  position: absolute;
+  top: 0;
+  z-index: 0;
+}
+
+.instructions li {
+  display: flex;
+  justify-content: space-between;
 }
 
 .panel {
   background-color: white;
-  border-radius: 0.5rem;
+  border-radius: 1.5rem;
   box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px,
     rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
   box-sizing: border-box;
@@ -41,7 +60,9 @@ canvas[data-paper-resize="true"] {
   margin: 1rem;
   padding: 2rem;
   position: absolute;
+  transition: opacity 0.1s, transform 0.1s;
   width: 300px;
+  z-index: 20;
 }
 
 .controls > div {
@@ -49,4 +70,16 @@ canvas[data-paper-resize="true"] {
   justify-content: space-between;
   display: flex;
   padding-bottom: 1rem;
+}
+
+.hide {
+  opacity: 0;
+  transition-timing-function: ease-out;
+  transform: scale(0.9);
+}
+
+.show{
+  opacity: 1;
+  transition-timing-function: ease-in;
+  transform: scale(1.0);
 }

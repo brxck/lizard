@@ -28,13 +28,18 @@
     <title>lizard.js</title>
   </head>
   <body>
-    <div class="container" @click="showPanel($event)" x-data="controlPanel()">
+    <div
+      class="container"
+      @contextmenu.prevent="showPanel($event)"
+      x-data="controlPanel()"
+    >
       <aside
         class="panel"
         x-ref="panel"
         x-show="show"
         @click.away="show = false"
-        @click.stop=""
+        x-transition:enter-start="hide"
+        x-transition:leave-end="hide"
       >
         <div style="display: flex; justify-content: space-between">
           <a
@@ -146,6 +151,10 @@
         </div>
       </aside>
       <canvas id="myCanvas" data-paper-resize="true"></canvas>
+      <ul class="instructions">
+        <li><span>left click:</span>&nbsp;<span>???</span></li>
+        <li><span>right click:</span>&nbsp;<span>menu</span></li>
+      </ul>
     </div>
     <link rel="stylesheet" href="style.css" />
   </body>

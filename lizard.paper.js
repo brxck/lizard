@@ -48,7 +48,7 @@ class Lizard {
       );
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
-        fillColor: brightness(this.primaryColor, -10),
+        fillColor: brightness(this.primaryColor, -5),
         radius: 12 * this.scale * this.chonk,
         data: { base, side: "right", stepping: true },
         center: this.getNextStep(base, "right"),
@@ -66,7 +66,7 @@ class Lizard {
     feet.children.forEach((foot) => {
       const leg = new Path.Line({
         style: {
-          strokeColor: brightness(this.primaryColor, -20),
+          strokeColor: brightness(this.primaryColor, -12),
           strokeWidth: 12 * this.scale * this.chonk,
           strokeCap: "round",
         },
