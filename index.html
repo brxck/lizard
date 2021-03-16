@@ -38,6 +38,7 @@
         x-ref="panel"
         x-show="show"
         @click.away="show = false"
+        @contextmenu.away="show = false"
         x-transition:enter-start="hide"
         x-transition:leave-end="hide"
       >
@@ -76,8 +77,8 @@
             <label for="scale">Scale</label>
             <input
               type="range"
-              min="0"
-              max="2"
+              min="0.5"
+              max="1.5"
               step="0.1"
               name="scale"
               id="scale"
@@ -89,7 +90,7 @@
             <label for="chonk">Chonk</label>
             <input
               type="range"
-              min="0"
+              min="0.5"
               max="2"
               step="0.1"
               name="chonk"

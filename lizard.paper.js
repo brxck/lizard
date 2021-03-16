@@ -1,5 +1,3 @@
-const SPACING = 10; // 1/2 the distance between the points
-
 /** Global point storing mouse location */
 let mouse = new Point(view.center);
 function onMouseMove(event) {
@@ -9,15 +7,16 @@ function onMouseMove(event) {
 class Lizard {
   constructor(options) {
     Object.entries(options).forEach(([key, value]) => {
-      this[key] = value;
+      this[key] = value; // todo: specify params
     });
     this.length = this.headLength + this.bodyLength + this.tailLength;
+    this.spacing = 10 * this.scale; // 1/2 the distance between the points
 
     // Create spine
     const spine = new Path();
     const start = view.center;
     for (let i = 0; i < this.length; i++) {
-      spine.add(start + new Point(i * SPACING * 2, 0));
+      spine.add(start + new Point(i * this.spacing * 2, 0));
     }
 
     // Create body
@@ -43,9 +42,8 @@ class Lizard {
     const feet = new Group();
     const legSpacing = (this.headLength * 2) / this.feetPairs;
     for (let i = 0; i < this.feetPairs; i++) {
-      const baseIndex = Math.round(
-        this.scale * this.headLength * 1.25 + legSpacing * i
-      );
+      const baseIndex =
+        Math.round(this.headLength + legSpacing * i * this.scale) + 1;
       const base = spine.segments[baseIndex];
       const rightFoot = new Path.Circle({
         fillColor: brightness(this.primaryColor, -5),
@@ -110,7 +108,7 @@ class Lizard {
       const segment = this.spine.segments[i];
       const nextSegment = segment.next;
       const vector = segment.point - nextSegment.point;
-      vector.length = SPACING;
+      vector.length = this.spacing;
       nextSegment.point = segment.point - vector;
 
       // Straighten out sharp bends; side-effect of length x2
