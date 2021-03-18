@@ -99,7 +99,7 @@ class Lizard {
     const firstVector = mouse - this.spine.firstSegment.point;
     if (firstVector.length > 45) {
       firstVector.length = Math.min(10, firstVector.length);
-      this.spine.firstSegment.point += firstVector;
+      this.spine.firstSegment.point += firstVector * this.speed;
     }
 
     // Move each segment to be a set distance behind the previous
@@ -250,6 +250,7 @@ const lizards = [
   new Lizard({
     chonk: 1,
     scale: 1,
+    speed: 1,
     primaryColor: "#18ba49",
     secondaryColor: "#b83a2e",
     feetPairs: 2,

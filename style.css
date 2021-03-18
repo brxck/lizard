@@ -34,7 +34,7 @@ body {
 }
 
 .instructions {
-  color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
   list-style: none;
   font-weight: 900;
   font-style: italic;
@@ -78,8 +78,8 @@ body {
   transform: scale(0.9);
 }
 
-.show{
+.show {
   opacity: 1;
   transition-timing-function: ease-in;
-  transform: scale(1.0);
+  transform: scale(1);
 }

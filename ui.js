@@ -2,6 +2,7 @@ function controlPanel() {
   const defaults = {
     chonk: 1,
     scale: 1,
+    speed: 1,
     primaryColor: "#18ba49",
     secondaryColor: "#b83a2e",
     feetPairs: 2,
