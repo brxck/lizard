@@ -41,22 +41,22 @@ class Lizard {
     // Create feet
     const feet = new Group();
     const legSpacing = (this.headLength * 2) / this.feetPairs;
-    for (let i = 0; i < this.feetPairs; i++) {
-      const baseIndex =
-        Math.round(this.headLength + legSpacing * i * this.scale) + 1;
-      const base = spine.segments[baseIndex];
-      const rightFoot = new Path.Circle({
-        fillColor: brightness(this.primaryColor, -5),
-        radius: 12 * this.scale * this.chonk,
-        data: { base, side: "right", stepping: true },
-        center: this.getNextStep(base, "right"),
-      });
-      const leftFoot = rightFoot.clone();
-      leftFoot.center = this.getNextStep(base, "left");
-      leftFoot.data.side = "left";
-      leftFoot.data.opposite = rightFoot;
-      rightFoot.data.opposite = leftFoot;
-      feet.addChildren([leftFoot, rightFoot]);
+    const footCount = this.feetPairs * 2 - 1;
+    for (let side of ["left", "right"]) {
+      for (let i = 0; i < this.feetPairs; i++) {
+        const baseIndex =
+          Math.round(this.headLength + legSpacing * i * this.scale) + 1;
+        const oppositeIndex = i + (this.feetPairs % footCount);
+        const base = spine.segments[baseIndex];
+
+        const foot = new Path.Circle({
+          fillColor: brightness(this.primaryColor, -5),
+          radius: 12 * this.scale * this.chonk,
+          data: { base, side, stepping: false, index: i, oppositeIndex },
+          center: this.getNextStep(base, side),
+        });
+        feet.addChild(foot);
+      }
     }
 
     // Create legs
@@ -215,14 +215,20 @@ class Lizard {
   /** Check each foot's distance from the next footstep and move if above threshhold */
   updateFeet() {
     this.feet.children.forEach((foot) => {
-      const { base, side, opposite } = foot.data;
+      const { base, side, oppositeIndex } = foot.data;
       const step = this.getNextStep(base, side);
       const stepVector = step - foot.position;
-      if (stepVector.length > 85 && !opposite.data.stepping) {
+
+      const priorFoot = foot.previousSibling;
+      const oppositeFoot = this.feet.children[oppositeIndex];
+      const canStep = !priorFoot?.data.stepping && !oppositeFoot.data.stepping;
+
+      if (stepVector.length > 85 && canStep) {
         foot.data.stepping = true;
       }
+
       if (foot.data.stepping) {
-        stepVector.length = Math.min(30, stepVector.length);
+        stepVector.length = Math.min(30 * this.speed, stepVector.length);
         foot.position += stepVector;
         foot.data.stepping = (step - foot.position).length != 0;
       }
