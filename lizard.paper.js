@@ -1,8 +1,22 @@
 /** Global point storing mouse location */
-let mouse = new Point(view.center);
+let mouse = { point: new Point(view.center), moved: false };
 function onMouseMove(event) {
-  mouse = event.point;
+  mouse.point = event.point;
+  mouse.moved = true;
+  setTimeout(() => {
+    mouse.moved = false;
+  }, 1500);
 }
+
+const logger = {
+  logged: {},
+  log(id, ...args) {
+    if (!this.logged[id]) {
+      this.logged[id] = true;
+      console.log(...args);
+    }
+  },
+};
 
 class Lizard {
   constructor(options) {
@@ -96,10 +110,20 @@ class Lizard {
   /** Move spine toward mouse, progressively straightening sharp angles */
   updateSpine() {
     // Move head toward toward mouse
-    const firstVector = mouse - this.spine.firstSegment.point;
+    const nose = this.spine.segments[0].point;
+    const mouseVector = mouse.point - this.spine.firstSegment.point;
+    const currentVector = nose - this.spine.segments[1].point;
+    currentVector.length = 50;
+    let firstVector = mouse.moved ? mouseVector : currentVector;
+
+    if (!view.bounds.contains(firstVector + nose)) {
+      // Rotate to avoid weird type error when hitting a wall head on...
+      firstVector += view.center - nose.rotate(1);
+    }
+
     if (firstVector.length > 45) {
       const distance = firstVector.length;
-      const easing = Math.min(1, distance / 300);
+      const easing = mouse.moved ? Math.min(1, distance / 200) : 1;
       firstVector.length = Math.min(10, firstVector.length);
       this.spine.firstSegment.point += firstVector * easing * this.speed;
     }
@@ -124,7 +148,6 @@ class Lizard {
       }
       lastVector = vector;
     }
-    this.spine.smooth({ type: "continuous" });
   }
 
   /**
@@ -249,7 +272,7 @@ class Lizard {
       knee.point = (ankle.point + hip.point) / 2;
       let angle = leg.data.base.curve.getTangentAt(0.5).angle;
       knee.point += new Point({ length: 20, angle });
-      leg.smooth({ type: "continuous" });
+      leg.smooth({ type: "continuous", factor: 0.25 });
     }
   }
 }
