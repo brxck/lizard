@@ -98,8 +98,10 @@ class Lizard {
     // Move head toward toward mouse
     const firstVector = mouse - this.spine.firstSegment.point;
     if (firstVector.length > 45) {
+      const distance = firstVector.length;
+      const easing = Math.min(1, distance / 300);
       firstVector.length = Math.min(10, firstVector.length);
-      this.spine.firstSegment.point += firstVector * this.speed;
+      this.spine.firstSegment.point += firstVector * easing * this.speed;
     }
 
     // Move each segment to be a set distance behind the previous
