@@ -252,24 +252,12 @@ class Lizard {
   }
 }
 
-const lizards = [
-  new Lizard({
-    chonk: 1,
-    scale: 1,
-    speed: 1,
-    primaryColor: "#18ba49",
-    secondaryColor: "#b83a2e",
-    feetPairs: 2,
-    headLength: 4,
-    bodyLength: 8,
-    tailLength: 10,
-  }),
-];
+const lizards = [];
 
 // Add functions to window so that they can be called externally
 window.spawnLizard = function (props) {
-  lizards[0].group.remove();
-  lizards[0] = new Lizard(props);
+  lizards.forEach((l) => l.group.remove());
+  lizards.push(new Lizard(props));
 };
 
 function onFrame(event) {

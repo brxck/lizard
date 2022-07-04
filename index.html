@@ -32,6 +32,7 @@
       class="container"
       @contextmenu.prevent="showPanel($event)"
       x-data="controlPanel()"
+      x-init="setTimeout(() => spawn(), 50)"
     >
       <aside
         class="panel"
@@ -56,16 +57,12 @@
         </div>
         <div style="padding-top: 1rem" class="controls">
           <div>
-            <label for="primaryColor">Primary Color</label>
             <input
               type="color"
               name="primaryColor"
               id="primaryColor"
               x-model="options.primaryColor"
             />
-          </div>
-          <div>
-            <label for="secondaryColor">Secondary Color</label>
             <input
               type="color"
               name="secondaryColor"
@@ -165,10 +162,6 @@
         </div>
       </aside>
       <canvas id="myCanvas" data-paper-resize="true"></canvas>
-      <ul class="instructions">
-        <li><span>left click:</span>&nbsp;<span>???</span></li>
-        <li><span>right click:</span>&nbsp;<span>menu</span></li>
-      </ul>
     </div>
     <link rel="stylesheet" href="style.css" />
   </body>

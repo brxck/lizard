@@ -3,13 +3,14 @@ function controlPanel() {
     chonk: 1,
     scale: 1,
     speed: 1,
-    primaryColor: "#18ba49",
-    secondaryColor: "#b83a2e",
+    primaryColor: "#65ab8a",
+    secondaryColor: "#a3463e",
     feetPairs: 2,
     headLength: 4,
     bodyLength: 8,
     tailLength: 10,
   };
+
   return {
     show: false,
     options: { ...defaults },

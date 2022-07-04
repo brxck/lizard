@@ -33,22 +33,6 @@ body {
   width: 100%;
 }
 
-.instructions {
-  color: rgba(255, 255, 255, 0.4);
-  list-style: none;
-  font-weight: 900;
-  font-style: italic;
-  font-size: 6rem;
-  position: absolute;
-  top: 0;
-  z-index: 0;
-}
-
-.instructions li {
-  display: flex;
-  justify-content: space-between;
-}
-
 .panel {
   background-color: white;
   border-radius: 1.5rem;
@@ -56,20 +40,19 @@ body {
     rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
   box-sizing: border-box;
   color: #333;
-  font-size: 90%;
-  margin: 1rem;
   padding: 2rem;
   position: absolute;
   transition: opacity 0.1s, transform 0.1s;
+  transform: translate(-10%, -10%);
   width: 300px;
   z-index: 20;
 }
 
 .controls > div {
   align-items: center;
-  justify-content: space-between;
   display: flex;
-  padding-bottom: 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
 }
 
 .hide {
