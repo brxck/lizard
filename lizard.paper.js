@@ -119,6 +119,7 @@ class Lizard {
     if (!view.bounds.contains(firstVector + nose)) {
       // Rotate to avoid weird type error when hitting a wall head on...
       firstVector += view.center - nose.rotate(1);
+      firstVector.angle *= 1.25;
     }
 
     if (firstVector.length > 45) {
@@ -248,12 +249,12 @@ class Lizard {
       const oppositeFoot = this.feet.children[oppositeIndex];
       const canStep = !priorFoot?.data.stepping && !oppositeFoot.data.stepping;
 
-      if (stepVector.length > 85 && canStep) {
+      if ((canStep && stepVector.length > 85) || stepVector.length > 120) {
         foot.data.stepping = true;
       }
 
       if (foot.data.stepping) {
-        stepVector.length = Math.min(30 * this.speed, stepVector.length);
+        stepVector.length = Math.min(25 * this.speed, stepVector.length);
         foot.position += stepVector;
         foot.data.stepping = (step - foot.position).length != 0;
       }
